@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+
+{% block title %}Profile - MonExperience{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1 class="page-title">Profile</h1>
+        <p class="page-subtitle">Your account information</p>
+    </div>
+    <a href="{% url 'profile_edit' %}" class="btn btn-primary">
+        <i class="bi bi-pencil"></i> Edit Profile
+    </a>
+</div>
+
+<div class="profile-grid">
+    <!-- Profile Information Card -->
+    <div class="profile-card">
+        <div class="profile-header">
+            <h5 class="mb-0" style="font-family: var(--font-display);">Profile Information</h5>
+        </div>
+        <div class="profile-body">
+            <div class="profile-info">
+                <div class="profile-info-row">
+                    <span class="profile-info-label">Full Name</span>
+                    <span class="profile-info-value">{{ user.full_name|default:user.phone }}</span>
+                </div>
+                <div class="profile-info-row">
+                    <span class="profile-info-label">Email</span>
+                    <span class="profile-info-value">{{ user.email|default:"-" }}</span>
+                </div>
+                <div class="profile-info-row">
+                    <span class="profile-info-label">Country</span>
+                    <span class="profile-info-value">{{ user.country.name|default:"-" }}</span>
+                </div>
+                <div class="profile-info-row">
+                    <span class="profile-info-label">Phone</span>
+                    <span class="profile-info-value">{{ user.phone|default:"-" }}</span>
+                </div>
+                <div class="profile-info-row">
+                    <span class="profile-info-label">Member since</span>
+                    <span class="profile-info-value">{{ user.date_joined|date:"F d, Y" }}</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Avatar Card -->
+    <div class="profile-card">
+        <div class="profile-header">
+            <h5 class="mb-0" style="font-family: var(--font-display);">Avatar</h5>
+        </div>
+        <div class="profile-body" style="text-align: center;">
+            {% if user.avatar %}
+            <img src="{{ user.avatar.url }}" alt="{{ user.full_name|default:user.phone }}" class="avatar avatar-lg" style="width: 150px; height: 150px; margin-bottom: var(--spacing-md);">
+            {% else %}
+            <div class="avatar avatar-lg" style="width: 150px; height: 150px; margin: 0 auto var(--spacing-md);">
+                {{ user.full_name|default:user.phone|make_list|first|upper }}
+            </div>
+            {% endif %}
+            <p style="color: var(--muted-foreground); margin-bottom: 0;">
+                <small>{{ user.full_name|default:user.phone }}</small>
+            </p>
+        </div>
+    </div>
+</div>
+{% endblock %}

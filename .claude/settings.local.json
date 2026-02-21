@@ -1,0 +1,20 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(pip install:*)",
+      "Bash(python -m venv:*)",
+      "Bash(./venv/Scripts/pip install:*)",
+      "Bash(./venv/Scripts/python:*)",
+      "Bash(\"C:/Users/abdoulkader.kabore/Documents/MonExperience/venv/Scripts/python.exe\" -c \"import sys; print\\(sys.executable\\); print\\(sys.path\\)\")",
+      "Bash(python -c:*)",
+      "Bash(PYTHONPATH=. python:*)",
+      "Bash(python manage.py migrate:*)",
+      "Bash(python manage.py:*)",
+      "Bash(redis-cli:*)",
+      "Bash(DJANGO_SETTINGS_MODULE=config.settings.local python:*)",
+      "Bash(curl:*)",
+      "Bash(pkill:*)",
+      "Bash(xxd:*)"
+    ]
+  }
+}

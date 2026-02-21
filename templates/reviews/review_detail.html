@@ -1,0 +1,266 @@
+{% extends "base.html" %}
+{% load crispy_forms_tags %}
+
+{% block title %}{{ review.title }} - MonExperience{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-8">
+        <!-- Breadcrumb -->
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{% url 'review_list' %}">Reviews</a></li>
+                {% for tag in review.tags.all %}
+                <li class="breadcrumb-item"><a href="{% url 'review_list_by_tag' tag.slug %}">{{ tag.name }}</a></li>
+                {% endfor %}
+                <li class="breadcrumb-item active">{{ review.title }}</li>
+            </ol>
+        </nav>
+
+        <!-- Review Header -->
+        <header class="review-detail-header">
+            <h1 class="review-detail-title">{{ review.title }}</h1>
+            <div class="review-detail-meta">
+                <div class="rating">
+                    {% for i in "12345" %}
+                    {% if forloop.counter <= review.rating %}
+                    <i class="bi bi-star-fill rating-star filled"></i>
+                    {% else %}
+                    <i class="bi bi-star rating-star"></i>
+                    {% endif %}
+                    {% endfor %}
+                </div>
+                {% if review.faced_company %}
+                <div class="text-muted">
+                    <i class="bi bi-calendar"></i> {{ review.faced_company|date:"F j, Y" }}
+                </div>
+                {% endif %}
+                <div class="review-card-tags">
+                    {% for tag in review.tags.all %}
+                    {% if tag.mood == 'positive' %}
+                    <span class="badge badge-positive">{{ tag.name }}</span>
+                    {% elif tag.mood == 'negative' %}
+                    <span class="badge badge-negative">{{ tag.name }}</span>
+                    {% else %}
+                    <span class="badge badge-neutral">{{ tag.name }}</span>
+                    {% endif %}
+                    {% endfor %}
+                </div>
+            </div>
+            {% if review.evidence %}
+            <div class="mb-3">
+                <a href="{{ review.evidence.url }}" class="btn btn-ghost btn-sm" target="_blank">
+                    <i class="bi bi-paperclip"></i> View Evidence
+                </a>
+            </div>
+            {% endif %}
+        </header>
+
+        <!-- Review Body -->
+        <div class="card mb-4">
+            <div class="card-body review-detail-body">
+                {{ review.body|linebreaks }}
+            </div>
+        </div>
+
+        {% if review.status == 'pending' %}
+        <div class="alert alert-warning">
+            <i class="bi bi-clock"></i> This review is pending approval.
+        </div>
+        {% endif %}
+
+        <!-- Author Updates Section -->
+        {% if updates %}
+        <div class="mt-4">
+            <h4><i class="bi bi-pin-angle"></i> Updates from Author</h4>
+            {% for update in updates %}
+            <div class="card mb-3" style="border-color: var(--primary);">
+                <div class="card-header" style="background-color: var(--primary); color: var(--primary-foreground);">
+                    <div class="d-flex justify-content-between">
+                        <span><i class="bi bi-star"></i> Author Update</span>
+                        <small>{{ update.created_at|date:"M d, Y" }}</small>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="review-card-tags mb-2">
+                        {% for tag in update.tags.all %}
+                        {% if tag.mood == 'positive' %}
+                        <span class="badge badge-positive">{{ tag.name }}</span>
+                        {% elif tag.mood == 'negative' %}
+                        <span class="badge badge-negative">{{ tag.name }}</span>
+                        {% else %}
+                        <span class="badge badge-neutral">{{ tag.name }}</span>
+                        {% endif %}
+                        {% endfor %}
+                    </div>
+                    <p class="mt-2">{{ update.message|linebreaks }}</p>
+                    {% if update.photos %}
+                    <img src="{{ update.photos.url }}" class="img-fluid rounded" style="max-height: 200px;">
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <!-- Add Update Form -->
+        {% if user.is_authenticated and user == review.user %}
+        <div class="mt-3 mb-4">
+            <a class="btn btn-ghost" data-bs-toggle="collapse" href="#updateForm" role="button" aria-expanded="false">
+                <i class="bi bi-plus-circle"></i> Add Update
+            </a>
+            <div class="collapse mt-2" id="updateForm">
+                <div class="card card-body">
+                    <form method="post" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        <input type="hidden" name="update_form" value="1">
+                        {{ update_form|crispy }}
+                        <button type="submit" class="btn btn-primary">Post Update</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Comments Section -->
+        <div class="mt-4">
+            <h3>Comments ({{ comments.count }})</h3>
+
+            {% if user.is_authenticated and review.comments_enabled %}
+            <div class="card mb-4">
+                <div class="card-body">
+                    <form method="post" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        {{ comment_form|crispy }}
+                        <button type="submit" class="btn btn-primary">Post Comment</button>
+                    </form>
+                </div>
+            </div>
+            {% elif not review.comments_enabled %}
+            <div class="alert" style="background-color: var(--secondary);">
+                <i class="bi bi-chat-dash"></i> Comments are disabled for this review.
+            </div>
+            {% else %}
+            <p><a href="{% url 'login' %}">Login</a> to post a comment.</p>
+            {% endif %}
+
+            {% for comment in comments %}
+            <div class="card mb-3" id="comment-{{ comment.id }}">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <strong>{{ comment.user.full_name|default:comment.user.phone }}</strong>
+                        <small class="text-muted">{{ comment.created_at|date:"M d, Y" }}</small>
+                    </div>
+                    {% if comment.tag %}
+                    <div class="mt-2">
+                        {% if comment.tag.mood == 'positive' %}
+                        <span class="badge badge-positive">{{ comment.tag.name }}</span>
+                        {% elif comment.tag.mood == 'negative' %}
+                        <span class="badge badge-negative">{{ comment.tag.name }}</span>
+                        {% else %}
+                        <span class="badge badge-neutral">{{ comment.tag.name }}</span>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+                    <p class="mt-2">{{ comment.message|linebreaks }}</p>
+                    {% if comment.photos %}
+                    <img src="{{ comment.photos.url }}" class="img-fluid rounded" style="max-height: 200px;">
+                    {% endif %}
+
+                    <!-- Reply Button -->
+                    {% if user.is_authenticated and review.comments_enabled %}
+                    <button class="btn btn-sm btn-link text-muted p-0 mt-2 reply-btn" data-comment-id="{{ comment.id }}">
+                        <i class="bi bi-reply"></i> Reply
+                    </button>
+
+                    <!-- Reply Form (hidden by default) -->
+                    <div class="reply-form mt-2" id="reply-form-{{ comment.id }}" style="display: none;">
+                        <form method="post" enctype="multipart/form-data" action="{% url 'review_detail' review.id %}">
+                            {% csrf_token %}
+                            <input type="hidden" name="parent_id" value="{{ comment.id }}">
+                            <div class="mb-2">
+                                <textarea name="message" class="form-control" rows="2" placeholder="Write your reply..." required></textarea>
+                            </div>
+                            <button type="submit" class="btn btn-sm btn-primary">Post Reply</button>
+                            <button type="button" class="btn btn-sm btn-link text-muted cancel-reply" data-comment-id="{{ comment.id }}">Cancel</button>
+                        </form>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Replies -->
+            {% for reply in comment.replies.all %}
+            <div class="card mb-3 ms-4" style="border-left: 3px solid var(--primary);">
+                <div class="card-body py-2">
+                    <div class="d-flex justify-content-between">
+                        <strong>{{ reply.user.full_name|default:reply.user.phone }}</strong>
+                        <small class="text-muted">{{ reply.created_at|date:"M d, Y" }}</small>
+                    </div>
+                    <p class="mt-2 mb-1">{{ reply.message|linebreaks }}</p>
+                </div>
+            </div>
+            {% endfor %}
+
+            {% empty %}
+            <p class="text-muted">No comments yet.</p>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Reply JavaScript -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Reply button click
+            document.querySelectorAll('.reply-btn').forEach(function(btn) {
+                btn.addEventListener('click', function() {
+                    var commentId = this.dataset.commentId;
+                    document.getElementById('reply-form-' + commentId).style.display = 'block';
+                    this.style.display = 'none';
+                });
+            });
+
+            // Cancel reply button click
+            document.querySelectorAll('.cancel-reply').forEach(function(btn) {
+                btn.addEventListener('click', function() {
+                    var commentId = this.dataset.commentId;
+                    document.getElementById('reply-form-' + commentId).style.display = 'none';
+                    document.querySelector('.reply-btn[data-comment-id="' + commentId + '"]').style.display = 'inline-block';
+                });
+            });
+        });
+    </script>
+
+    <!-- Sidebar -->
+    <div class="col-lg-4">
+        <div class="review-sidebar">
+            <!-- Company Card -->
+            <div class="sidebar-card">
+                <div class="sidebar-card-title">Company</div>
+                <p class="mb-1" style="font-weight: 600; font-size: 1.125rem;">{{ review.company.name }}</p>
+                <small class="text-muted">
+                    {% if review.company.city %}{{ review.company.city }}, {% endif %}{{ review.company.country.name }}
+                </small>
+                {% if review.company.website %}
+                <br><small><a href="{{ review.company.website }}" target="_blank">Website</a></small>
+                {% endif %}
+            </div>
+
+            <!-- Author Card -->
+            <div class="sidebar-card">
+                <div class="sidebar-card-title">Author</div>
+                <p class="mb-1" style="font-weight: 600;">{{ review.user.full_name|default:review.user.phone }}</p>
+                <small class="text-muted">Member since {{ review.user.date_joined|date:"M Y" }}</small>
+            </div>
+
+            <!-- Posted Card -->
+            <div class="sidebar-card">
+                <div class="sidebar-card-title">Posted</div>
+                <small class="text-muted">
+                    {{ review.created_at|date:"F d, Y" }} at {{ review.created_at|time:"H:i" }}
+                </small>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

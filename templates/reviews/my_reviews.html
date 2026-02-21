@@ -1,0 +1,112 @@
+{% extends "base.html" %}
+
+{% block title %}My Reviews - MonExperience{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1 class="page-title">My Reviews</h1>
+        <p class="page-subtitle">Manage your submitted reviews</p>
+    </div>
+    <a href="{% url 'review_create' %}" class="btn btn-primary">
+        <i class="bi bi-plus-circle"></i> Write New Review
+    </a>
+</div>
+
+{% if reviews %}
+<div class="table-container">
+    <table id="reviews-list" class="table">
+        <thead>
+            <tr>
+                <th>Title</th>
+                <th>Tags</th>
+                <th>Rating</th>
+                <th>Status</th>
+                <th>Hidden</th>
+                <th>Comments</th>
+                <th>Created</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for review in reviews %}
+            <tr>
+                <td>
+                    <a href="{% url 'review_detail' review.id %}">{{ review.title }}</a>
+                </td>
+                <td>
+                    {% for tag in review.tags.all %}
+                    {% if tag.mood == 'positive' %}
+                    <span class="badge badge-positive">{{ tag.name }}</span>
+                    {% elif tag.mood == 'negative' %}
+                    <span class="badge badge-negative">{{ tag.name }}</span>
+                    {% else %}
+                    <span class="badge badge-neutral">{{ tag.name }}</span>
+                    {% endif %}
+                    {% empty %}
+                    <span style="color: var(--muted-foreground);">-</span>
+                    {% endfor %}
+                </td>
+                <td>
+                    {% for i in "12345" %}
+                    {% if forloop.counter <= review.rating %}
+                    <i class="bi bi-star-fill rating-star filled"></i>
+                    {% else %}
+                    <i class="bi bi-star rating-star"></i>
+                    {% endif %}
+                    {% endfor %}
+                </td>
+                <td>
+                    {% if review.status == 'approved' %}
+                    <span class="badge badge-positive">Approved</span>
+                    {% elif review.status == 'pending' %}
+                    <span class="badge" style="background-color: rgba(245, 158, 11, 0.15); color: var(--warning);">Pending</span>
+                    {% else %}
+                    <span class="badge badge-negative">Rejected</span>
+                    {% endif %}
+                </td>
+                <td>
+                    {% if review.is_hidden %}
+                    <span class="badge badge-negative">Hidden</span>
+                    {% else %}
+                    <span class="badge badge-neutral">Visible</span>
+                    {% endif %}
+                </td>
+                <td>
+                    {% if review.comments_enabled %}
+                    <span class="badge badge-positive">On</span>
+                    {% else %}
+                    <span class="badge badge-neutral">Off</span>
+                    {% endif %}
+                </td>
+                <td>{{ review.created_at|date:"M d, Y" }}</td>
+                <td>
+                    <div style="display: flex; gap: 0.5rem;">
+                        <a href="{% url 'review_detail' review.id %}" class="btn btn-sm btn-ghost">
+                            <i class="bi bi-binoculars-fill"></i>
+                        </a>
+                        <a href="{% url 'toggle_hide_review' review.id %}" class="btn btn-sm {% if review.is_hidden %}btn-accent{% else %}btn-ghost{% endif %}">
+                            {% if review.is_hidden %}<i class="bi bi-eye"></i>{% else %}<i class="bi bi-eye-slash"></i>{% endif %}
+                        </a>
+                        <a href="{% url 'toggle_comments' review.id %}" class="btn btn-sm {% if review.comments_enabled %}btn-ghost{% else %}btn-accent{% endif %}">
+                            {% if review.comments_enabled %}<i class="bi bi-chat-fill"></i>{% else %}<i class="bi bi-chat"></i>{% endif %}
+                        </a>
+                    </div>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% else %}
+<div class="empty-state">
+    <div class="empty-state-icon">
+        <i class="bi bi-journal-plus"></i>
+    </div>
+    <h3 class="empty-state-title">No reviews yet</h3>
+    <p>You haven't written any reviews yet.
+        <a href="{% url 'review_create' %}">Write your first review</a>!
+    </p>
+</div>
+{% endif %}
+{% endblock %}

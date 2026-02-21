@@ -1,0 +1,14 @@
+# Base requirements for MonExperience
+Django>=5.0,<6.0
+psycopg[binary]
+django-crispy-forms
+crispy-bootstrap5
+bleach
+django-ratelimit
+django-countries
+phonenumbers
+celery
+redis
+django-environ
+Pillow
+gunicorn

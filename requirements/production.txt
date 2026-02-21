@@ -1,0 +1,4 @@
+# Production requirements for MonExperience
+-r base.txt
+django-redis
+sentry-sdk
