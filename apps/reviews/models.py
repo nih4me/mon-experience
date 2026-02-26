@@ -136,6 +136,14 @@ class Comment(BaseModel):
     )
     message = models.TextField()
     photos = models.ImageField(upload_to="comments/photos/", blank=True)
+    is_company_response = models.BooleanField(
+        default=False,
+        help_text="This comment is an official response from the company"
+    )
+    is_company_response = models.BooleanField(
+        default=False,
+        help_text="True if this is an official response from the company"
+    )
 
     class Meta:
         ordering = ["created_at"]

@@ -2,6 +2,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.views.generic import ListView, DetailView
+from django.db import models
 from django_ratelimit.decorators import ratelimit
 
 from apps.reviews.models import Review, Tag, Comment, ReviewUpdate
@@ -20,15 +21,63 @@ class ReviewListView(ListView):
 
     def get_queryset(self):
         tag_slug = self.kwargs.get("tag_slug")
+        search_query = self.request.GET.get("q", "")
+        industry = self.request.GET.get("industry", "")
+
         # Exclude hidden reviews from public list
         qs = Review.objects.filter(
             status="approved",
             is_hidden=False
-        ).select_related("user", "company").prefetch_related("tags")
+        ).select_related("user", "company").prefetch_related("tags").annotate(
+            comment_count=models.Count("comments", distinct=True) + models.Count("comments__replies", distinct=True)
+        ).annotate(
+            comment_count=models.Count("comments", distinct=True) + models.Count("comments__replies", distinct=True)
+        )
 
+        # Filter by tag
         if tag_slug:
-            return qs.filter(tags__slug=tag_slug)
+            qs = qs.filter(tags__slug=tag_slug)
+
+        # Filter by search query
+        if search_query:
+            qs = qs.filter(
+                models.Q(title__icontains=search_query) |
+                models.Q(body__icontains=search_query) |
+                models.Q(company__name__icontains=search_query)
+            )
+
+        # Filter by industry
+        if industry:
+            qs = qs.filter(company__industry__iexact=industry)
+
         return qs
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        # Get non-empty industries from companies with approved reviews
+        industries = Review.objects.filter(
+            status="approved",
+            is_hidden=False,
+            company__isnull=False,
+            company__industry__gt=""
+        ).values_list("company__industry", flat=True).distinct().order_by("company__industry")
+
+        # Case-insensitive unique: keep first occurrence, preserve original casing
+        seen = set()
+        unique_industries = []
+        for ind in industries:
+            ind_lower = ind.strip().lower()
+            if ind and ind_lower not in seen:
+                seen.add(ind_lower)
+                unique_industries.append(ind.strip())
+
+        context["industries"] = unique_industries
+
+        # Pass current filter values
+        context["search_query"] = self.request.GET.get("q", "")
+        context["selected_industry"] = self.request.GET.get("industry", "")
+
+        return context
 
 
 # Review Detail with Comments
@@ -59,10 +108,17 @@ class ReviewDetailView(DetailView):
         context["comments"] = self.object.comments.select_related("user", "tag", "parent").prefetch_related("replies__user", "replies__tag").filter(parent__isnull=True)
         context["update_form"] = ReviewUpdateForm()
         context["updates"] = self.object.updates.select_related().prefetch_related("tags").all()
+        # Add claimed company for the user
+        from apps.companies.selectors import company_get_for_user
+        context["claimed_company"] = company_get_for_user(self.request.user)
         return context
 
     def post(self, request, *args, **kwargs):
         self.object = self.get_object()
+
+        # Check if user has a claimed company
+        from apps.companies.selectors import company_get_for_user
+        claimed_company = company_get_for_user(request.user)
 
         # Check if it's a comment or an update
         if "message" in request.POST and request.POST.get("update_form"):
@@ -89,11 +145,23 @@ class ReviewDetailView(DetailView):
             if not self.object.comments_enabled:
                 messages.error(request, "Comments are disabled for this review.")
                 return redirect("review_detail", pk=self.object.id)
+
+            # Company accounts can only comment on their own company's reviews
+            if claimed_company:
+                if self.object.company != claimed_company:
+                    messages.error(request, "You can only comment on reviews about your company.")
+                    return redirect("review_detail", pk=self.object.id)
+
             form = CommentForm(request.POST, request.FILES)
             if form.is_valid() and request.user.is_authenticated:
                 comment = form.save(commit=False)
                 comment.user = request.user
                 comment.review = self.object
+
+                # If user has a claimed company, mark as company response
+                if claimed_company:
+                    comment.is_company_response = True
+
                 # Handle reply - parent_id is passed as UUID string in hidden input
                 parent_id = form.cleaned_data.get("parent_id")
                 if parent_id:
@@ -109,6 +177,13 @@ class ReviewDetailView(DetailView):
 @login_required
 def review_create_view(request):
     """Create a new review."""
+    # Check if user has a claimed company - company accounts cannot post reviews
+    from apps.companies.selectors import company_get_for_user
+    claimed_company = company_get_for_user(request.user)
+    if claimed_company:
+        messages.error(request, "Company accounts cannot post reviews. You can only respond to reviews about your company.")
+        return redirect('company_dashboard')
+
     if request.method == "POST":
         form = ReviewForm(request.POST, request.FILES)
         if form.is_valid():
@@ -130,7 +205,12 @@ def review_create_view(request):
 # User's Reviews
 @login_required
 def my_reviews_view(request):
-    """Show user's own reviews."""
+    """Show user's own reviews. Company accounts cannot access this page."""
+    # Company accounts cannot post reviews
+    if hasattr(request.user, "claimed_company") and request.user.claimed_company:
+        messages.error(request, "Company accounts cannot access this page.")
+        return redirect("review_list")
+
     reviews = Review.objects.filter(user=request.user).select_related("company").prefetch_related("tags")
     return render(request, "reviews/my_reviews.html", {"reviews": reviews})
 

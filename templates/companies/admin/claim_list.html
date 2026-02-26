@@ -1,0 +1,123 @@
+{% extends "base.html" %}
+
+{% block title %}Company Claims - MonExperience{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1 class="page-title">Company Claims</h1>
+        <p class="page-subtitle">Review and manage company verification requests</p>
+    </div>
+</div>
+
+<!-- Filters -->
+<div class="mb-4">
+    <div class="btn-group" role="group">
+        <a href="{% url 'admin_claim_list' %}" class="btn btn-outline-secondary {% if not status_filter %}active{% endif %}">
+            All
+        </a>
+        <a href="{% url 'admin_claim_list' %}?status=pending" class="btn btn-outline-warning {% if status_filter == 'pending' %}active{% endif %}">
+            Pending
+        </a>
+        <a href="{% url 'admin_claim_list' %}?status=approved" class="btn btn-outline-success {% if status_filter == 'approved' %}active{% endif %}">
+            Approved
+        </a>
+        <a href="{% url 'admin_claim_list' %}?status=rejected" class="btn btn-outline-danger {% if status_filter == 'rejected' %}active{% endif %}">
+            Rejected
+        </a>
+    </div>
+</div>
+
+{% if claims %}
+<table class="table table-hover">
+    <thead>
+        <tr>
+            <th>Company</th>
+            <th>Requester</th>
+            <th>Method</th>
+            <th>Status</th>
+            <th>Submitted</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for claim in claims %}
+        <tr>
+            <td>
+                <strong>{{ claim.company.name }}</strong><br>
+                <small class="text-muted">{{ claim.company.country }}</small>
+            </td>
+            <td>
+                {{ claim.requester_name|default:claim.user.full_name }}<br>
+                <small class="text-muted">{{ claim.requester_role|default:"-" }}</small>
+            </td>
+            <td>
+                {% if claim.verification_method == 'email' %}
+                <span class="badge bg-info">Email</span>
+                {% elif claim.verification_method == 'documents' %}
+                <span class="badge bg-secondary">Documents</span>
+                {% elif claim.verification_method == 'employment' %}
+                <span class="badge bg-primary">Employment</span>
+                {% else %}
+                <span class="badge bg-dark">Website</span>
+                {% endif %}
+            </td>
+            <td>
+                {% if claim.status == 'pending' %}
+                <span class="badge bg-warning text-dark">Pending</span>
+                {% elif claim.status == 'approved' %}
+                <span class="badge bg-success">Approved</span>
+                {% else %}
+                <span class="badge bg-danger">Rejected</span>
+                {% endif %}
+            </td>
+            <td>{{ claim.created_at|date:"M d, Y" }}</td>
+            <td>
+                <a href="{% url 'admin_claim_detail' claim.id %}" class="btn btn-sm btn-outline-primary">
+                    <i class="bi bi-eye"></i> View
+                </a>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<!-- Pagination -->
+{% if claims.has_other_pages %}
+<nav class="mt-4">
+    <ul class="pagination">
+        {% if claims.has_previous %}
+        <li class="pagination-item">
+            <a class="pagination-link" href="?page={{ claims.previous_page_number }}{% if status_filter %}&status={{ status_filter }}{% endif %}">
+                <i class="bi bi-chevron-left"></i>
+            </a>
+        </li>
+        {% endif %}
+
+        {% for num in claims.paginator.page_range %}
+        <li class="pagination-item {% if claims.number == num %}active{% endif %}">
+            <a class="pagination-link" href="?page={{ num }}{% if status_filter %}&status={{ status_filter }}{% endif %}">{{ num }}</a>
+        </li>
+        {% endfor %}
+
+        {% if claims.has_next %}
+        <li class="pagination-item">
+            <a class="pagination-link" href="?page={{ claims.next_page_number }}{% if status_filter %}&status={{ status_filter }}{% endif %}">
+                <i class="bi bi-chevron-right"></i>
+            </a>
+        </li>
+        {% endif %}
+    </ul>
+</nav>
+{% endif %}
+
+{% else %}
+<div class="empty-state">
+    <div class="empty-state-icon">
+        <i class="bi bi-inbox"></i>
+    </div>
+    <h3 class="empty-state-title">No claims found</h3>
+    <p>There are no company claims to review.</p>
+</div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,4 @@
+**/claude-telegram-bot.env
+**/.env
+**/__pycache__
+**/migrations

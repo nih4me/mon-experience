@@ -5,6 +5,8 @@ from django.contrib import messages
 from django import forms
 
 from apps.users.models import User
+from apps.companies.forms import CompanyForm
+from apps.companies.forms import CompanyForm
 
 
 class UserCreationForm(forms.ModelForm):
@@ -64,14 +66,37 @@ def profile_view(request):
 
 @login_required
 def profile_edit_view(request):
-    """Edit user profile."""
+    """Edit user profile. For company accounts, also edit company info."""
+    # Check if user has a claimed company
+    claimed_company = getattr(request.user, "claimed_company", None)
+
     if request.method == "POST":
         form = ProfileForm(request.POST, request.FILES, instance=request.user)
+        company_form = CompanyForm(request.POST, instance=claimed_company) if claimed_company else None
+
         if form.is_valid():
             form.save()
-            messages.success(request, "Profile updated successfully!")
-            return redirect("profile")
+
+        company_form_valid = company_form.is_valid() if company_form else True
+        if company_form and not company_form_valid:
+            # Re-render with errors
+            return render(request, "users/profile_edit.html", {
+                "form": form,
+                "company_form": company_form,
+                "claimed_company": claimed_company
+            })
+
+        if company_form and company_form_valid:
+            company_form.save()
+
+        messages.success(request, "Profile updated successfully!")
+        return redirect("profile")
     else:
         form = ProfileForm(instance=request.user)
+        company_form = CompanyForm(instance=claimed_company) if claimed_company else None
 
-    return render(request, "users/profile_edit.html", {"form": form})
+    return render(request, "users/profile_edit.html", {
+        "form": form,
+        "company_form": company_form,
+        "claimed_company": claimed_company
+    })

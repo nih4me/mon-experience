@@ -8,10 +8,72 @@
         <h1 class="page-title">Reviews</h1>
         <p class="page-subtitle">Discover experiences from our community</p>
     </div>
+    {% if not claimed_company %}
     <a href="{% url 'review_create' %}" class="btn btn-primary">
         <i class="bi bi-plus-circle"></i> Write Review
     </a>
+    {% endif %}
 </div>
+
+<!-- Search Bar -->
+<div class="mb-4">
+    <form method="get" action="{% url 'review_list' %}" class="d-flex gap-2">
+        {% if tag_slug %}
+        <input type="hidden" name="tag" value="{{ tag_slug }}">
+        {% endif %}
+        {% if selected_industry %}
+        <input type="hidden" name="industry" value="{{ selected_industry }}">
+        {% endif %}
+        <div class="input-group">
+            <span class="input-group-text bg-white">
+                <i class="bi bi-search"></i>
+            </span>
+            <input type="text" name="q" class="form-control" placeholder="Search reviews, companies..." value="{{ search_query }}">
+            {% if search_query %}
+            <span class="input-group-text bg-white clear-search cursor-pointer" onclick="var f=this.closest('form'); f.querySelector('input[name=q]').value=''; f.submit();">
+                <i class="bi bi-x-lg"></i>
+            </span>
+            {% endif %}
+            <button type="submit" class="btn btn-primary">Search</button>
+        </div>
+    </form>
+</div>
+
+{% if industries %}
+<!-- Industry Filters -->
+<div class="mb-4">
+    <div class="d-flex flex-wrap gap-2 align-items-center">
+        <span class="text-muted me-2"><i class="bi bi-filter"></i> Industries:</span>
+        {% for ind in industries %}
+        {% if ind %}
+        <a href="?{% if search_query %}q={{ search_query }}&{% endif %}industry={{ ind|urlencode }}"
+           class="badge {% if selected_industry == ind %}bg-warning text-dark{% else %}bg-white text-dark{% endif %}">
+            {{ ind }}
+        </a>
+        {% endif %}
+        {% endfor %}
+        {% if selected_industry %}
+        <a href="?{% if search_query %}q={{ search_query }}{% endif %}" class="badge bg-secondary text-decoration-none">
+            <i class="bi bi-x"></i> Clear
+        </a>
+        {% endif %}
+    </div>
+</div>
+{% endif %}
+
+{% if search_query or selected_industry %}
+<div class="mb-3">
+    <small class="text-muted">
+        {% if search_query and selected_company %}
+        Showing results for "{{ search_query }}" in {{ selected_industry }}
+        {% elif search_query %}
+        Showing results for "{{ search_query }}"
+        {% elif selected_industry %}
+        Showing results for industry: {{ selected_industry }}
+        {% endif %}
+    </small>
+</div>
+{% endif %}
 
 {% if reviews %}
 <div class="review-grid stagger-animation">
@@ -28,6 +90,9 @@
             <div class="review-card-company">
                 <i class="bi bi-building"></i>
                 {{ review.company.name }} ({{ review.company.country }})
+                {% if review.company.industry %}
+                <span class="badge bg-light text-dark ms-1">{{ review.company.industry }}</span>
+                {% endif %}
             </div>
             {% endif %}
             <div class="review-card-rating">
@@ -51,8 +116,11 @@
                 {% endfor %}
             </div>
             <p class="review-card-excerpt">{{ review.body|truncatewords:15 }}</p>
-            <div class="review-card-footer">
-                By {{ review.user.full_name|default:review.user.phone }} on {{ review.created_at|date:"M d, Y" }}
+            <div class="review-card-footer d-flex justify-content-between align-items-center">
+                <span>By {{ review.user.full_name|default:review.user.phone }} on {{ review.created_at|date:"M d, Y" }}</span>
+                <span class="text-muted">
+                    <i class="bi bi-chat-dots"></i> {{ review.comment_count }}
+                </span>
             </div>
         </div>
     </article>
@@ -64,7 +132,7 @@
     <ul class="pagination">
         {% if page_obj.has_previous %}
         <li class="pagination-item">
-            <a class="pagination-link" href="?page={{ page_obj.previous_page_number }}">
+            <a class="pagination-link" href="?page={{ page_obj.previous_page_number }}{% if search_query %}&q={{ search_query }}{% endif %}{% if selected_industry %}&industry={{ selected_industry }}{% endif %}">
                 <i class="bi bi-chevron-left"></i>
             </a>
         </li>
@@ -78,13 +146,13 @@
 
         {% for num in page_obj.paginator.page_range %}
         <li class="pagination-item {% if page_obj.number == num %}active{% endif %}">
-            <a class="pagination-link" href="?page={{ num }}">{{ num }}</a>
+            <a class="pagination-link" href="?page={{ num }}{% if search_query %}&q={{ search_query }}{% endif %}{% if selected_industry %}&industry={{ selected_industry }}{% endif %}">{{ num }}</a>
         </li>
         {% endfor %}
 
         {% if page_obj.has_next %}
         <li class="pagination-item">
-            <a class="pagination-link" href="?page={{ page_obj.next_page_number }}">
+            <a class="pagination-link" href="?page={{ page_obj.next_page_number }}{% if search_query %}&q={{ search_query }}{% endif %}{% if selected_industry %}&industry={{ selected_industry }}{% endif %}">
                 <i class="bi bi-chevron-right"></i>
             </a>
         </li>
@@ -104,8 +172,17 @@
     <div class="empty-state-icon">
         <i class="bi bi-journal-text"></i>
     </div>
-    <h3 class="empty-state-title">No reviews yet</h3>
+    <h3 class="empty-state-title">No reviews found</h3>
+    {% if search_query or selected_industry %}
+    <p>Try adjusting your search or filters.</p>
+    <a href="{% url 'review_list' %}" class="btn btn-outline-primary">Clear Filters</a>
+    {% else %}
+    {% if not claimed_company %}
     <p>Be the first to <a href="{% url 'review_create' %}">write a review</a>!</p>
+    {% else %}
+    <p>Company accounts cannot post reviews. Check your <a href="{% url 'company_dashboard' %}">dashboard</a> to respond to reviews.</p>
+    {% endif %}
+    {% endif %}
 </div>
 {% endif %}
 {% endblock %}

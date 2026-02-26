@@ -1,0 +1,116 @@
+{% extends "base.html" %}
+{% load crispy_forms_tags %}
+
+{% block title %}{{ page_title }} - MonExperience{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            <div class="text-center mb-4">
+                <h2 class="mb-1">{{ page_title }}</h2>
+                <p class="text-muted">Verify your company and respond to reviews</p>
+            </div>
+
+            {% if preselected_company %}
+            <div class="alert alert-info text-center mb-4">
+                <i class="bi bi-building"></i> You are claiming: <strong>{{ preselected_company.name }}</strong>
+            </div>
+            {% endif %}
+
+            <div class="row">
+                <!-- Form Section -->
+                <div class="col-lg-7">
+                    <div class="card">
+                        <div class="card-body p-4">
+                            <form method="post">
+                                {% csrf_token %}
+                                {% crispy form %}
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Info Sidebar -->
+                <div class="col-lg-5">
+                    <!-- Steps -->
+                    <div class="card mb-3">
+                        <div class="card-body">
+                            <h6 class="text-uppercase text-muted mb-3">
+                                <i class="bi bi-list-ol me-1"></i> How It Works
+                            </h6>
+                            <div class="d-flex align-items-start mb-3">
+                                <span class="badge bg-primary rounded-pill me-2">1</span>
+                                <div>
+                                    <strong>Submit Claim</strong>
+                                    <p class="small text-muted mb-0">Fill out the form with your verification details</p>
+                                </div>
+                            </div>
+                            <div class="d-flex align-items-start mb-3">
+                                <span class="badge bg-secondary rounded-pill me-2">2</span>
+                                <div>
+                                    <strong>We Verify</strong>
+                                    <p class="small text-muted mb-0">Our team reviews your submission</p>
+                                </div>
+                            </div>
+                            <div class="d-flex align-items-start">
+                                <span class="badge bg-secondary rounded-pill me-2">3</span>
+                                <div>
+                                    <strong>Get Access</strong>
+                                    <p class="small text-muted mb-0">Manage your company once approved</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Verification Methods -->
+                    <div class="card mb-3">
+                        <div class="card-body">
+                            <h6 class="text-uppercase text-muted mb-3">
+                                <i class="bi bi-shield-check me-1"></i> Verification Methods
+                            </h6>
+                            <div class="d-flex align-items-start mb-2">
+                                <i class="bi bi-envelope text-primary me-2 mt-1"></i>
+                                <div>
+                                    <strong class="small">Company Email</strong>
+                                    <p class="small text-muted mb-0">Verify using an official company email</p>
+                                </div>
+                            </div>
+                            <div class="d-flex align-items-start mb-2">
+                                <i class="bi bi-file-earmark-text text-primary me-2 mt-1"></i>
+                                <div>
+                                    <strong class="small">Documents</strong>
+                                    <p class="small text-muted mb-0">Business registration or authorization</p>
+                                </div>
+                            </div>
+                            <div class="d-flex align-items-start mb-2">
+                                <i class="bi bi-person-badge text-primary me-2 mt-1"></i>
+                                <div>
+                                    <strong class="small">Employment</strong>
+                                    <p class="small text-muted mb-0">Proof of your role at the company</p>
+                                </div>
+                            </div>
+                            <div class="d-flex align-items-start">
+                                <i class="bi bi-globe text-primary me-2 mt-1"></i>
+                                <div>
+                                    <strong class="small">Website</strong>
+                                    <p class="small text-muted mb-0">Add a verification code to your site</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Timeline -->
+                    <div class="card bg-light">
+                        <div class="card-body text-center">
+                            <i class="bi bi-clock text-muted fs-4 mb-2 d-block"></i>
+                            <strong>Review Time</strong>
+                            <p class="small text-muted mb-0">Claims are typically reviewed within 24-48 hours</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

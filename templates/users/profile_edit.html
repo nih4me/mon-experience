@@ -12,9 +12,11 @@
 </div>
 
 <div class="row justify-content-center">
-    <div class="col-md-6 col-lg-5">
-        <div class="card">
+    <div class="col-md-8 col-lg-7">
+        <!-- User Profile Form -->
+        <div class="card mb-4">
             <div class="card-body">
+                <h5 class="card-title mb-4">Account Information</h5>
                 <form method="post" enctype="multipart/form-data">
                     {% csrf_token %}
                     {{ form|crispy }}
@@ -29,6 +31,27 @@
                 </form>
             </div>
         </div>
+
+        <!-- Company Information Form (for company accounts) -->
+        {% if company_form %}
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title mb-4">Company Information</h5>
+                <form method="post" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    {{ company_form|crispy }}
+                    <div style="display: flex; gap: var(--spacing-sm); margin-top: var(--spacing-lg);">
+                        <button type="submit" class="btn btn-primary" style="flex: 1;">
+                            <i class="bi bi-check-lg"></i> Update Company
+                        </button>
+                        <a href="{% url 'profile' %}" class="btn btn-ghost">
+                            Cancel
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+        {% endif %}
     </div>
 </div>
 {% endblock %}

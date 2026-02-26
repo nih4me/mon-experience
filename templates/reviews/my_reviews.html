@@ -8,9 +8,11 @@
         <h1 class="page-title">My Reviews</h1>
         <p class="page-subtitle">Manage your submitted reviews</p>
     </div>
+    {% if not claimed_company %}
     <a href="{% url 'review_create' %}" class="btn btn-primary">
         <i class="bi bi-plus-circle"></i> Write New Review
     </a>
+    {% endif %}
 </div>
 
 {% if reviews %}
@@ -104,9 +106,13 @@
         <i class="bi bi-journal-plus"></i>
     </div>
     <h3 class="empty-state-title">No reviews yet</h3>
+    {% if not claimed_company %}
     <p>You haven't written any reviews yet.
         <a href="{% url 'review_create' %}">Write your first review</a>!
     </p>
+    {% else %}
+    <p>Company accounts cannot post reviews. You can only respond to reviews about your company from the dashboard.</p>
+    {% endif %}
 </div>
 {% endif %}
 {% endblock %}

@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% load crispy_forms_tags %}
+
+{% block title %}{{ page_title }} - MonExperience{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-xl-10">
+            <div class="text-center mb-4">
+                <h2>{{ page_title }}</h2>
+                <p class="text-muted">Register your company and start managing your reputation</p>
+            </div>
+
+            <div class="card">
+                <div class="card-body p-4">
+                    <form method="post" class="row g-3">
+                        {% csrf_token %}
+                        {% crispy form %}
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

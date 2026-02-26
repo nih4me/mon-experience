@@ -14,7 +14,8 @@
       "Bash(DJANGO_SETTINGS_MODULE=config.settings.local python:*)",
       "Bash(curl:*)",
       "Bash(pkill:*)",
-      "Bash(xxd:*)"
+      "Bash(xxd:*)",
+      "Bash(cd:*)"
     ]
   }
 }

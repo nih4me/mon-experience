@@ -73,6 +73,10 @@
   --card-hover: #1A2332;
 }
 
+.cursor-pointer {
+  cursor: pointer;
+}
+
 /* ----- Reset & Base ----- */
 *, *::before, *::after {
   box-sizing: border-box;

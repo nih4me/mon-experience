@@ -1,6 +1,8 @@
 from django import forms
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Layout, Submit, Row, Column, Fieldset, HTML
+from django_countries.fields import CountryField
+from django_countries.widgets import CountrySelectWidget
 
 from apps.reviews.models import Review, Tag, Comment, ReviewUpdate
 from apps.companies.models import Company
@@ -31,11 +33,11 @@ class ReviewForm(forms.ModelForm):
         label="New Company Name",
         help_text="Enter name for new company"
     )
-    new_company_country = forms.CharField(
-        max_length=2,
+    new_company_country = CountryField().formfield(
         required=False,
         label="New Company Country",
-        help_text="Country code (e.g., US, GB, FR)"
+        help_text="Select country",
+        widget=forms.Select(attrs={"class": "select2-single"})
     )
     new_company_city = forms.CharField(
         max_length=100,
@@ -73,6 +75,7 @@ class ReviewForm(forms.ModelForm):
         self.fields["existing_company"].queryset = Company.objects.all()
         # Add select2 class for searchable dropdown
         self.fields["existing_company"].widget.attrs.update({"class": "select2-single"})
+        self.fields["new_company_country"].widget.attrs.update({"class": "select2-single"})
         self.helper = FormHelper()
         self.helper.layout = Layout(
             Fieldset(

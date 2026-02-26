@@ -1,0 +1,217 @@
+{% extends "base.html" %}
+
+{% block title %}Claim Details - MonExperience{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1 class="page-title">Claim Details</h1>
+        <p class="page-subtitle">Review company verification request</p>
+    </div>
+    <a href="{% url 'admin_claim_list' %}" class="btn btn-outline-secondary">
+        <i class="bi bi-arrow-left"></i> Back to List
+    </a>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <!-- Claim Information -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="bi bi-info-circle"></i> Claim Information</h5>
+            </div>
+            <div class="card-body">
+                <table class="table table-borderless">
+                    <tr>
+                        <th>Company:</th>
+                        <td>
+                            <strong>{{ claim.company.name }}</strong>
+                            {% if claim.company.is_verified %}
+                            <span class="badge bg-success ms-2">Verified</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>Country:</th>
+                        <td>{{ claim.company.country }}</td>
+                    </tr>
+                    <tr>
+                        <th>Status:</th>
+                        <td>
+                            {% if claim.status == 'pending' %}
+                            <span class="badge bg-warning text-dark">Pending</span>
+                            {% elif claim.status == 'approved' %}
+                            <span class="badge bg-success">Approved</span>
+                            {% else %}
+                            <span class="badge bg-danger">Rejected</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>Submitted:</th>
+                        <td>{{ claim.created_at|date:"F d, Y g:i a" }}</td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+
+        <!-- Verification Details -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="bi bi-shield-check"></i> Verification Details</h5>
+            </div>
+            <div class="card-body">
+                <table class="table table-borderless">
+                    <tr>
+                        <th>Method:</th>
+                        <td>
+                            {% if claim.verification_method == 'email' %}
+                            <span class="badge bg-info">Email Verification</span>
+                            {% elif claim.verification_method == 'documents' %}
+                            <span class="badge bg-secondary">Business Documents</span>
+                            {% elif claim.verification_method == 'employment' %}
+                            <span class="badge bg-primary">Proof of Employment</span>
+                            {% else %}
+                            <span class="badge bg-dark">Website Verification</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% if claim.verification_email %}
+                    <tr>
+                        <th>Verification Email:</th>
+                        <td>{{ claim.verification_email }}</td>
+                    </tr>
+                    {% endif %}
+                    {% if claim.verification_document %}
+                    <tr>
+                        <th>Document:</th>
+                        <td><a href="{{ claim.verification_document.url }}" class="btn btn-sm btn-outline-primary" target="_blank">
+                            <i class="bi bi-file-earmark"></i> View Document
+                        </a></td>
+                    </tr>
+                    {% endif %}
+                    {% if claim.verification_website_code %}
+                    <tr>
+                        <th>Website Code:</th>
+                        <td><code>{{ claim.verification_website_code }}</code></td>
+                    </tr>
+                    {% endif %}
+                </table>
+            </div>
+        </div>
+
+        <!-- Requester Information -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="bi bi-person"></i> Requester Information</h5>
+            </div>
+            <div class="card-body">
+                <table class="table table-borderless">
+                    <tr>
+                        <th>Name:</th>
+                        <td>{{ claim.requester_name|default:claim.user.full_name }}</td>
+                    </tr>
+                    <tr>
+                        <th>Role:</th>
+                        <td>{{ claim.requester_role|default:"-" }}</td>
+                    </tr>
+                    <tr>
+                        <th>Email:</th>
+                        <td>{{ claim.user.email }}</td>
+                    </tr>
+                    <tr>
+                        <th>Phone:</th>
+                        <td>{{ claim.user.phone }}</td>
+                    </tr>
+                    {% if claim.requester_notes %}
+                    <tr>
+                        <th>Notes:</th>
+                        <td>{{ claim.requester_notes }}</td>
+                    </tr>
+                    {% endif %}
+                </table>
+            </div>
+        </div>
+
+        <!-- Admin Review (for pending claims) -->
+        {% if claim.status == 'pending' %}
+        <div class="card mb-4 border-warning">
+            <div class="card-header bg-warning bg-opacity-10">
+                <h5 class="mb-0"><i class="bi bi-gear"></i> Admin Actions</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <form method="post" action="{% url 'admin_claim_approve' claim.id %}">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-success w-100">
+                                <i class="bi bi-check-circle"></i> Approve Claim
+                            </button>
+                        </form>
+                    </div>
+                    <div class="col-md-6">
+                        <form method="post" action="{% url 'admin_claim_reject' claim.id %}">
+                            {% csrf_token %}
+                            <div class="input-group">
+                                <input type="text" name="rejection_reason" class="form-control" placeholder="Rejection reason..." required>
+                                <button type="submit" class="btn btn-danger">
+                                    <i class="bi bi-x-circle"></i> Reject
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Review History -->
+        {% if claim.reviewed_at %}
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="bi bi-history"></i> Review History</h5>
+            </div>
+            <div class="card-body">
+                <table class="table table-borderless">
+                    <tr>
+                        <th>Reviewed By:</th>
+                        <td>{{ claim.reviewed_by.full_name|default:claim.reviewed_by.phone }}</td>
+                    </tr>
+                    <tr>
+                        <th>Reviewed At:</th>
+                        <td>{{ claim.reviewed_at|date:"F d, Y g:i a" }}</td>
+                    </tr>
+                    {% if claim.rejection_reason %}
+                    <tr>
+                        <th>Rejection Reason:</th>
+                        <td>{{ claim.rejection_reason }}</td>
+                    </tr>
+                    {% endif %}
+                    {% if claim.admin_notes %}
+                    <tr>
+                        <th>Admin Notes:</th>
+                        <td>{{ claim.admin_notes }}</td>
+                    </tr>
+                    {% endif %}
+                </table>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Sidebar -->
+    <div class="col-md-4">
+        <div class="card bg-light">
+            <div class="card-body">
+                <h5 class="card-title"><i class="bi bi-question-circle"></i> Need Help?</h5>
+                <p class="card-text small">Review the verification documents and ensure the requester is authorized to represent the company.</p>
+                <ul class="list-unstyled small">
+                    <li><i class="bi bi-check"></i> Verify email domain matches company</li>
+                    <li><i class="bi bi-check"></i> Check business documents are valid</li>
+                    <li><i class="bi bi-check"></i> Confirm employment authorization</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
